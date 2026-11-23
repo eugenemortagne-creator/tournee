@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1419">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tournée">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon.png">
+<title>Tournée</title>
+<style>
+:root{--bg:#0f1419;--card:#1a222c;--line:#2a3542;--txt:#f2f5f8;--mut:#8b9bb0;--ok:#2ecc71;--ko:#ff6b5b;--acc:#ffb020}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{padding:env(safe-area-inset-top) 14px calc(86px + env(safe-area-inset-bottom));min-height:100vh}
+h1{font-size:22px;margin:14px 0 2px}
+.sub{color:var(--mut);font-size:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px}
+.big{font-size:64px;font-weight:800;line-height:1;text-align:center}
+.lbl{color:var(--mut);font-size:13px;text-align:center;margin-top:4px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+button{font:inherit;color:var(--txt);border:0;border-radius:16px;padding:16px;font-weight:700;font-size:18px;background:#2a3542}
+button:active{transform:scale(.97)}
+.plus{background:var(--ok);color:#06210f;font-size:30px;padding:28px 10px;width:100%;border-radius:22px}
+.fail{background:var(--ko);color:#2b0a06}
+.acc{background:var(--acc);color:#2b1c00}
+.ghost{background:transparent;border:1px solid var(--line);color:var(--mut);font-weight:600;font-size:15px;padding:12px}
+input,textarea,select{width:100%;font:inherit;font-size:17px;color:var(--txt);background:#0f1419;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+textarea{min-height:90px;resize:vertical}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:14px 0}
+.stats div{background:#0f1419;border-radius:14px;padding:10px 4px;text-align:center}
+.stats b{display:block;font-size:22px}
+.stats span{font-size:12px;color:var(--mut)}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;gap:8px;padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:#0b0f13;border-top:1px solid var(--line)}
+nav button{flex:1;background:transparent;color:var(--mut);padding:12px 4px;font-size:15px}
+nav button.on{background:#1a222c;color:var(--txt)}
+.addr b{font-size:18px}
+.addr .note{white-space:pre-wrap;color:#d6dee8;margin:6px 0 10px;font-size:16px}
+.addr .meta{color:var(--mut);font-size:13px}
+.links{display:flex;gap:8px}
+.links a{flex:1;text-align:center;text-decoration:none;color:var(--txt);background:#2a3542;border-radius:12px;padding:12px;font-weight:600;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{font-size:16px;padding:12px 14px}
+.hide{display:none}
+.warn{font-size:12px;color:var(--mut);text-align:center;margin-top:8px}
+.hist div{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.hist div:last-child{border:0}
+</style>
+</head>
+<body>
+
+<section id="v-day">
+  <h1>Ma tournée</h1>
+  <div class="sub" id="today"></div>
+
+  <div class="card" id="setup">
+    <div class="lbl" style="text-align:left;margin-bottom:8px">Nombre de colis au départ</div>
+    <input id="total" type="number" inputmode="numeric" placeholder="ex. 85">
+    <button class="acc" id="start" style="width:100%">Démarrer la tournée</button>
+  </div>
+
+  <div id="live" class="hide">
+    <div class="card">
+      <div class="big" id="done">0</div>
+      <div class="lbl">colis livrés</div>
+      <div class="stats">
+        <div><b id="left">0</b><span>restants</span></div>
+        <div><b id="rate">–</b><span>colis / h</span></div>
+        <div><b id="eta">–</b><span>fin estimée</span></div>
+      </div>
+      <div class="lbl" id="failsLbl"></div>
+    </div>
+    <button class="plus" id="plus">+1 livré</button>
+    <div class="row" style="margin-top:12px">
+      <button class="fail" id="failBtn">Échec</button>
+      <button class="ghost" id="undo">Annuler le dernier</button>
+    </div>
+    <div class="card hide" id="failBox" style="margin-top:12px">
+      <div class="lbl" style="text-align:left;margin-bottom:10px">Motif de l'échec</div>
+      <div class="chips" id="motifs"></div>
+    </div>
+    <button class="ghost" id="end" style="width:100%;margin-top:18px">Terminer la journée</button>
+  </div>
+
+  <div class="card hist hide" id="histCard" style="margin-top:16px">
+    <div class="lbl" style="text-align:left;margin-bottom:6px">Derniers jours</div>
+    <div id="hist"></div>
+  </div>
+</section>
+
+<section id="v-addr" class="hide">
+  <h1>Adresses</h1>
+  <div class="sub">Tes notes : codes, pièges, astuces. Pas de noms de clients.</div>
+  <input id="q" type="search" placeholder="Chercher une rue, un code, un mot…">
+  <button class="acc" id="newAddr" style="width:100%;margin-bottom:12px">+ Nouvelle adresse</button>
+
+  <div class="card hide" id="form">
+    <input id="f-adr" placeholder="Adresse (ex. 12 rue des Lilas, Tresses)">
+    <input id="f-code" placeholder="Code / digicode (facultatif)">
+    <textarea id="f-note" placeholder="Notes : étage, chien, sonnette HS, laisser au voisin…"></textarea>
+    <div class="row">
+      <button class="ghost" id="f-cancel">Annuler</button>
+      <button class="acc" id="f-save">Enregistrer</button>
+    </div>
+  </div>
+
+  <div id="list"></div>
+</section>
+
+<section id="v-more" class="hide">
+  <h1>Réglages</h1>
+  <div class="sub">Tes données restent sur ton téléphone.</div>
+  <div class="card">
+    <div class="lbl" style="text-align:left;margin-bottom:8px">Copie de secours (toutes tes adresses)</div>
+    <button class="ghost" id="exp" style="width:100%">Afficher la sauvegarde</button>
+    <textarea id="expTxt" class="hide" readonly style="margin-top:10px;min-height:140px"></textarea>
+  </div>
+  <div class="card">
+    <div class="lbl" style="text-align:left;margin-bottom:8px">Restaurer une sauvegarde</div>
+    <textarea id="impTxt" placeholder="Colle ici ta sauvegarde"></textarea>
+    <button class="ghost" id="imp" style="width:100%">Restaurer</button>
+    <div class="warn" id="impMsg"></div>
+  </div>
+  <div class="warn" id="storeInfo"></div>
+</section>
+
+<nav>
+  <button data-v="day" class="on">Journée</button>
+  <button data-v="addr">Adresses</button>
+  <button data-v="more">Réglages</button>
+</nav>
+
+<script>
+(function(){
+  var MOTIFS=["Absent","Adresse introuvable","Accès impossible","Refus","Autre"];
+  var S={addresses:[],day:null,history:[]};
+  var $=function(id){return document.getElementById(id)};
+
+  function newDay(){return {date:new Date().toISOString().slice(0,10),total:0,start:null,events:[]}}
+  function todayStr(){return new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"})}
+  function uid(){return Math.random().toString(36).slice(2,9)}
+
+  function save(){
+    try{localStorage.setItem("tournee_v1",JSON.stringify(S))}catch(e){}
+  }
+  function adopt(o){
+    if(!o||typeof o!=="object")return;
+    S.addresses=Array.isArray(o.addresses)?o.addresses:[];
+    S.day=o.day||null;
+    S.history=Array.isArray(o.history)?o.history:[];
+  }
+  function loadLocal(){
+    try{var r=localStorage.getItem("tournee_v1");if(r)adopt(JSON.parse(r))}catch(e){}
+  }
+  function initStore(){
+    loadLocal();render();
+    try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+    $("storeInfo").textContent="Données enregistrées sur ce téléphone uniquement. Fais une copie de secours de temps en temps.";
+  }
+
+  /* ---------- journée ---------- */
+  function counts(){
+    var d=S.day||newDay(),done=0,fails=0;
+    d.events.forEach(function(e){if(e.t==="ok")done++;else fails++});
+    return {done:done,fails:fails,left:Math.max(0,d.total-done-fails)};
+  }
+  function fmtTime(ms){var d=new Date(ms);return d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"})}
+  function renderDay(){
+    $("today").textContent=todayStr();
+    var d=S.day;
+    var running=d&&d.start;
+    $("setup").classList.toggle("hide",!!running);
+    $("live").classList.toggle("hide",!running);
+    if(running){
+      var c=counts();
+      $("done").textContent=c.done;
+      $("left").textContent=c.left;
+      var hours=(Date.now()-d.start)/3600000;
+      if(c.done>=3&&hours>0.05){
+        var rate=c.done/hours;
+        $("rate").textContent=rate.toFixed(1).replace(".",",");
+        $("eta").textContent=c.left>0?fmtTime(Date.now()+c.left/rate*3600000):"✓";
+      }else{$("rate").textContent="–";$("eta").textContent="–"}
+      $("failsLbl").textContent=c.fails?(c.fails+" échec"+(c.fails>1?"s":"")):"";
+      $("plus").textContent=c.left===0&&d.total>0?"Tout est traité ✓":"+1 livré";
+    }
+    var h=S.history.slice(-7).reverse();
+    $("histCard").classList.toggle("hide",!h.length);
+    var box=$("hist");box.textContent="";
+    h.forEach(function(x){
+      var row=document.createElement("div");
+      var a=document.createElement("span"),b=document.createElement("span");
+      a.textContent=new Date(x.date+"T12:00:00").toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+      b.textContent=x.done+" livrés · "+x.fails+" échec"+(x.fails>1?"s":"")+(x.rate?" · "+x.rate+"/h":"");
+      row.appendChild(a);row.appendChild(b);box.appendChild(row);
+    });
+  }
+  $("start").onclick=function(){
+    var n=parseInt($("total").value,10);
+    if(!n||n<1){$("total").focus();return}
+    S.day={date:new Date().toISOString().slice(0,10),total:n,start:Date.now(),events:[]};
+    save();render();
+  };
+  $("plus").onclick=function(){
+    if(!S.day)return;
+    S.day.events.push({t:"ok",ts:Date.now()});
+    if(navigator.vibrate)try{navigator.vibrate(20)}catch(e){}
+    save();render();
+  };
+  $("undo").onclick=function(){if(S.day&&S.day.events.length){S.day.events.pop();save();render()}};
+  $("failBtn").onclick=function(){$("failBox").classList.toggle("hide")};
+  (function(){
+    var box=$("motifs");
+    MOTIFS.forEach(function(m){
+      var b=document.createElement("button");b.textContent=m;
+      b.onclick=function(){
+        S.day.events.push({t:"ko",m:m,ts:Date.now()});
+        $("failBox").classList.add("hide");save();render();
+      };
+      box.appendChild(b);
+    });
+  })();
+  $("end").onclick=function(){
+    var btn=$("end");
+    if(btn.dataset.sure!=="1"){btn.dataset.sure="1";btn.textContent="Appuie encore pour confirmer";
+      setTimeout(function(){btn.dataset.sure="0";btn.textContent="Terminer la journée"},4000);return}
+    var c=counts(),d=S.day;
+    var hours=(Date.now()-d.start)/3600000;
+    S.history.push({date:d.date,done:c.done,fails:c.fails,rate:hours>0.05&&c.done?+(c.done/hours).toFixed(1):0});
+    S.history=S.history.slice(-60);
+    S.day=null;btn.dataset.sure="0";btn.textContent="Terminer la journée";
+    $("total").value="";save();render();
+  };
+  setInterval(function(){if(S.day&&S.day.start&&!$("v-day").classList.contains("hide"))renderDay()},30000);
+
+  /* ---------- adresses ---------- */
+  var editId=null;
+  function enc(s){return encodeURIComponent(s)}
+  function renderList(){
+    var q=$("q").value.trim().toLowerCase();
+    var box=$("list");box.textContent="";
+    var items=S.addresses.filter(function(a){
+      return !q||(a.adr+" "+(a.code||"")+" "+(a.note||"")).toLowerCase().indexOf(q)>-1;
+    }).sort(function(a,b){return a.adr.localeCompare(b.adr,"fr")});
+    if(!items.length){
+      var e=document.createElement("div");e.className="warn";
+      e.textContent=S.addresses.length?"Aucun résultat.":"Aucune adresse pour l'instant. Ajoute ta première !";
+      box.appendChild(e);return;
+    }
+    items.forEach(function(a){
+      var c=document.createElement("div");c.className="card addr";
+      var t=document.createElement("b");t.textContent=a.adr;c.appendChild(t);
+      if(a.code){var m=document.createElement("div");m.className="meta";m.textContent="Code : "+a.code;c.appendChild(m)}
+      if(a.note){var n=document.createElement("div");n.className="note";n.textContent=a.note;c.appendChild(n)}
+      var l=document.createElement("div");l.className="links";
+      var g=document.createElement("a");g.textContent="Maps";g.target="_blank";g.rel="noopener";
+      g.href="https://www.google.com/maps/search/?api=1&query="+enc(a.adr);
+      var w=document.createElement("a");w.textContent="Waze";w.target="_blank";w.rel="noopener";
+      w.href="https://waze.com/ul?q="+enc(a.adr)+"&navigate=yes";
+      l.appendChild(g);l.appendChild(w);c.appendChild(l);
+      var r=document.createElement("div");r.className="row";r.style.marginTop="8px";
+      var eb=document.createElement("button");eb.className="ghost";eb.textContent="Modifier";
+      eb.onclick=function(){openForm(a)};
+      r.appendChild(eb);c.appendChild(r);
+      box.appendChild(c);
+    });
+  }
+  function openForm(a){
+    editId=a?a.id:null;
+    $("f-adr").value=a?a.adr:"";$("f-code").value=a?(a.code||""):"";$("f-note").value=a?(a.note||""):"";
+    $("form").classList.remove("hide");$("f-adr").focus();
+  }
+  $("newAddr").onclick=function(){openForm(null)};
+  $("f-cancel").onclick=function(){$("form").classList.add("hide")};
+  $("f-save").onclick=function(){
+    var adr=$("f-adr").value.trim();if(!adr){$("f-adr").focus();return}
+    var obj={adr:adr,code:$("f-code").value.trim(),note:$("f-note").value.trim()};
+    if(editId){S.addresses.forEach(function(a){if(a.id===editId){a.adr=obj.adr;a.code=obj.code;a.note=obj.note}})}
+    else{obj.id=uid();S.addresses.push(obj)}
+    $("form").classList.add("hide");save();renderList();
+  };
+  $("q").oninput=renderList;
+
+  /* ---------- réglages ---------- */
+  $("exp").onclick=function(){
+    var t=$("expTxt");t.value=JSON.stringify({addresses:S.addresses});
+    t.classList.remove("hide");t.focus();t.select();
+  };
+
+  $("imp").onclick=function(){
+    try{
+      var o=JSON.parse($("impTxt").value);
+      if(!o||!Array.isArray(o.addresses))throw 0;
+      var ids={};S.addresses.forEach(function(a){ids[a.id]=1});
+      o.addresses.forEach(function(a){if(a&&a.adr){if(!a.id||ids[a.id])a.id=uid();S.addresses.push(a)}});
+      save();renderList();$("impMsg").textContent="Sauvegarde restaurée.";
+    }catch(e){$("impMsg").textContent="Texte invalide."}
+  };
+
+  /* ---------- navigation ---------- */
+  var tabs=document.querySelectorAll("nav button");
+  tabs.forEach(function(b){
+    b.onclick=function(){
+      tabs.forEach(function(x){x.classList.toggle("on",x===b)});
+      ["day","addr","more"].forEach(function(v){$("v-"+v).classList.toggle("hide",v!==b.dataset.v)});
+      window.scrollTo(0,0);render();
+    };
+  });
+  function render(){renderDay();renderList()}
+  render();initStore();
+  if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})})}
+})();
+</script>
+</body>
+</html>
